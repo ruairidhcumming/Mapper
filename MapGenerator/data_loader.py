@@ -8,13 +8,17 @@ class DataLoader():
        # self.dataset_name = dataset_name
         self.img_res = img_res
 
-    def load_data(self, batch_size=1, is_testing=False,datapath =''):
+    def load_data(self, batch_size=1, is_testing=False,datapath ='', nImages=0):
         data_type = "train" if not is_testing else "test"
         #path = glob('./datasets/%s/%s/*' % (self.dataset_name, data_type))
         path = list()
-        for file in os.listdir(datapath):
-            path.append(datapath + file)
-        ##print(path)
+        pics = os.listdir(datapath)
+        if nImages >0 and nImages <= len(pics):
+            for file in np.random.choice(pics,size = 1000):
+                path.append(datapath + file)
+        else:
+             for file in pics:
+                path.append(datapath + file)        ##print(path)
         batch_images = np.random.choice(path, size=batch_size)
 
         imgs_A = []
@@ -28,8 +32,11 @@ class DataLoader():
 
             img_A = scipy.misc.imresize(img_A, self.img_res)
             img_B = scipy.misc.imresize(img_B, self.img_res)
-
-            # If training => do random flip
+            # If training => do random flip (independent random lr and ud flips)
+            if not is_testing and np.random.random() < 0.5:
+                img_A = np.flipud(img_A)
+                img_B = np.flipud(img_B)
+            
             if not is_testing and np.random.random() < 0.5:
                 img_A = np.fliplr(img_A)
                 img_B = np.fliplr(img_B)
@@ -42,10 +49,14 @@ class DataLoader():
 
         return imgs_A, imgs_B
 
-    def load_batch(self, batch_size=1, is_testing=False, datapath = ''):
+    def load_batch(self, batch_size=1, is_testing=False, datapath = '',nImages = 0):
         path = list()
-        for file in os.listdir(datapath):
-            path.append(datapath + file)
+        if nImages >0:
+            for file in np.random.choice(os.listdir(datapath),size = 1000):
+                path.append(datapath + file)
+        else:
+             for file in os.listdir(datapath):
+                path.append(datapath + file)
         #print(path)
         data_type = "train" if not is_testing else "val"
      #   path = glob('./datasets/%s/%s/*' % (self.dataset_name, data_type))

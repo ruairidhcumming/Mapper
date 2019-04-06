@@ -143,7 +143,7 @@ class Pix2Pix():
 
         return Model([img_A, img_B], validity)
 
-    def train(self, epochs, batch_size=1, sample_interval=50,datapath = ''):
+    def train(self, epochs, batch_size=1, sample_interval=50,datapath = '', nImages=0):
 
         start_time = datetime.datetime.now()
 
@@ -152,7 +152,7 @@ class Pix2Pix():
         fake = np.zeros((batch_size,) + self.disc_patch)
 
         for epoch in range(epochs):
-            for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size = batch_size, datapath = datapath)):
+            for batch_i, (imgs_A, imgs_B) in enumerate(self.data_loader.load_batch(batch_size = batch_size, datapath = datapath, nImages = nImages)):
 
                 # ---------------------
                 #  Train Discriminator
