@@ -51,11 +51,12 @@ class DataLoader():
 
     def load_batch(self, batch_size=1, is_testing=False, datapath = '',nImages = 0):
         path = list()
-        if nImages >0:
-            for file in np.random.choice(os.listdir(datapath),size = 1000):
+        pics = os.listdir(datapath)
+        if nImages >0 and nImages<=len(pics):
+            for file in np.random.choice(pics,size = 1000):
                 path.append(datapath + file)
         else:
-             for file in os.listdir(datapath):
+             for file in pics:
                 path.append(datapath + file)
         #print(path)
         data_type = "train" if not is_testing else "val"
