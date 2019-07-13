@@ -13,5 +13,5 @@ print('creating Pix2Pix model')
 model = pix2pix.Pix2Pix()
 ## that was easy, pix2pix and dataloader modified from Keras-GAN and keras-contrib respectively
 
-model.train(epochs = 16 , batch_size = 2, datapath = picspath)
+model.train(epochs = 1 , batch_size = 2, datapath = picspath)
 

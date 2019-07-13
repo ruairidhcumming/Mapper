@@ -4,9 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 class DataLoader():
-    def __init__(self, img_res=(128, 128)):
+    def __init__(self, inpt_img_res=(128, 128),opt_img_res=(128, 128)):
        # self.dataset_name = dataset_name
-        self.img_res = img_res
+        self.inpt_img_res = inpt_img_res
+        self.opt_img_res=opt_img_res
+
+    def form_images(img):
+        return (0)## function to be built if tests are sucessful
 
     def load_data(self, batch_size=1, is_testing=False,datapath =''):
         data_type = "train" if not is_testing else "test"
@@ -25,14 +29,25 @@ class DataLoader():
             h, w, _ = img.shape
             _w = int(w/2)
             img_A, img_B = img[:, _w:, :], img[:,:_w, :]
+            ## now append filter blocked element of B onto A as "known" map element
+            blocking = np.zeros(np.prod(img_A.shape))
+            blocking = np.reshape(blocking, img_A.shape)
+            xmin = np.random.randint(0,img_A.shape[0])
+            xmax = np.random.randint(xmin,img_A.shape[0])
+            ymin = np.random.randint(0,img_A.shape[1])
+            ymax = np.random.randint(ymin,img_A.shape[1])
+            blocking[xmin:xmax,ymin:ymax,:] = 1
 
-            img_A = scipy.misc.imresize(img_A, self.img_res)
-            img_B = scipy.misc.imresize(img_B, self.img_res)
-
-            # If training => do random flip
+               # If training => do random flip
             if not is_testing and np.random.random() < 0.5:
                 img_A = np.fliplr(img_A)
                 img_B = np.fliplr(img_B)
+            blocked_A  = np.multiply (img_A , blocking)
+            img_B = np.concatenate((img_B,blocked_A),axis = 1)
+            img_A = scipy.misc.imresize(img_A, self.opt_img_res)
+            img_B = scipy.misc.imresize(img_B, self.inpt_img_res)
+
+         
 
             imgs_A.append(img_A)
             imgs_B.append(img_B)
@@ -58,16 +73,26 @@ class DataLoader():
             for img in batch:
                 img = self.imread(img)
                 h, w, _ = img.shape
-                half_w = int(w/2)
-                img_A = img[:, half_w:, :]
-                img_B = img[:, :half_w, :]
+                _w = int(w/2)
+                img_A, img_B = img[:, _w:, :], img[:,:_w, :]
+                ## now append filter blocked element of B onto A as "known" map element
+                blocking = np.zeros(np.prod(img_A.shape))
+                blocking = np.reshape(blocking, img_A.shape)
+                xmin = np.random.randint(0,img_A.shape[0])
+                xmax = np.random.randint(xmin,img_A.shape[0])
+                ymin = np.random.randint(0,img_A.shape[1])
+                ymax = np.random.randint(ymin,img_A.shape[1])
+                blocking[xmin:xmax,ymin:ymax,:] = 1
 
-                img_A = scipy.misc.imresize(img_A, self.img_res)
-                img_B = scipy.misc.imresize(img_B, self.img_res)
-
-                if not is_testing and np.random.random() > 0.5:
-                        img_A = np.fliplr(img_A)
-                        img_B = np.fliplr(img_B)
+               # If training => do random flip
+                if not is_testing and np.random.random() < 0.5:
+                    img_A = np.fliplr(img_A)
+                    img_B = np.fliplr(img_B)
+                blocked_A  = np.multiply (img_A , blocking)
+                img_B = np.concatenate((img_B,blocked_A),axis = 1)
+                img_A = scipy.misc.imresize(img_A, self.opt_img_res)
+                img_B = scipy.misc.imresize(img_B, self.inpt_img_res)
+         
 
                 imgs_A.append(img_A)
                 imgs_B.append(img_B)

@@ -19,19 +19,21 @@ import os
 class Pix2Pix():
     def __init__(self):
         # Input shape
-        self.img_rows = 256
-        self.img_cols = 256
+        self.inpt_img_rows = 256
+        self.inpt_img_cols = 256
+        self.opt_img_rows =256
+        self.opt_img_cols = 256
         self.channels = 3
-        self.img_shape = (self.img_rows, self.img_cols, self.channels)
-      
+        self.inpt_img_shape = (self.inpt_img_rows, self.inpt_img_cols, self.channels)
+        self.opt_img_shape = (self.opt_img_rows, self.opt_img_cols, self.channels)
         # Configure data loader
         self.dataset_name = 'maps'
         self.data_loader = DataLoader(
-                                      img_res=(self.img_rows, self.img_cols))
+                                      inpt_img_res=(self.inpt_img_rows, self.inpt_img_cols),opt_img_res =(self.opt_img_rows, self.opt_img_cols))
 
         
         # Calculate output shape of D (PatchGAN)
-        patch = int(self.img_rows / 2**4)
+        patch = int(self.opt_img_rows / 2**4)
         self.disc_patch = (patch, patch, 1)
 
         # Number of filters in the first layer of G and D
@@ -55,8 +57,8 @@ class Pix2Pix():
         self.generator = self.build_generator()
 
         # Input images and their conditioning images
-        img_A = Input(shape=self.img_shape)
-        img_B = Input(shape=self.img_shape)
+        img_A = Input(shape=self.opt_img_shape)
+        img_B = Input(shape=self.inpt_img_shape)
 
         # By conditioning on B generate a fake version of A
         fake_A = self.generator(img_B)
@@ -75,9 +77,9 @@ class Pix2Pix():
     def build_generator(self):
         """U-Net Generator"""
 
-        def conv2d(layer_input, filters, f_size=4, bn=True):
+        def conv2d(layer_input, filters, f_size=4, bn=True, strides = (2,2)):
             """Layers used during downsampling"""
-            d = Conv2D(filters, kernel_size=f_size, strides=2, padding='same')(layer_input)
+            d = Conv2D(filters, kernel_size=f_size, padding='same',strides = strides)(layer_input)
             d = LeakyReLU(alpha=0.2)(d)
             if bn:
                 d = BatchNormalization(momentum=0.8)(d)
@@ -94,10 +96,10 @@ class Pix2Pix():
             return u
 
         # Image input
-        d0 = Input(shape=self.img_shape)
+        d0 = Input(shape=self.inpt_img_shape)
 
         # Downsampling
-        d1 = conv2d(d0, self.gf, bn=False)
+        d1 = conv2d(d0, self.gf, bn=False),#strides = (2,4))
         d2 = conv2d(d1, self.gf*2)
         d3 = conv2d(d2, self.gf*4)
         d4 = conv2d(d3, self.gf*8)
@@ -128,11 +130,11 @@ class Pix2Pix():
                 d = BatchNormalization(momentum=0.8)(d)
             return d
 
-        img_A = Input(shape=self.img_shape)
-        img_B = Input(shape=self.img_shape)
+        img_A = Input(shape=self.opt_img_shape)
+        img_B = Input(shape=self.inpt_img_shape)
 
         # Concatenate image and conditioning image by channels to produce input
-        combined_imgs = Concatenate(axis=-1)([img_A, img_B])
+        combined_imgs = Concatenate(axis=2)([img_A, img_B])
 
         d1 = d_layer(combined_imgs, self.df, bn=False)
         d2 = d_layer(d1, self.df*2)
@@ -157,7 +159,7 @@ class Pix2Pix():
                 # ---------------------
                 #  Train Discriminator
                 # ---------------------
-
+                
                 # Condition on B and generate a translated version
                 fake_A = self.generator.predict(imgs_B)
 
